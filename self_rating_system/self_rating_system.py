@@ -1,35 +1,42 @@
-from flask import Flask, request, jsonify
 import json
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import Dict, List
 
-app = Flask(__name__)
+app = FastAPI()
 
-def load_criteria():
-    with open(r"D:\Glaxit Projects\padel_project\assets\file.json", "r") as file:
-        return json.load(file)
 
-score_criteria = load_criteria()
+with open("sports_rating_data.json", "r") as file:
+    SPORTS_QUESTIONS = json.load(file)
 
-@app.route("/questions", methods=["GET"])
-def get_questions():
-    questions = [{"question": q["question"], "options": list(q["options"].keys())} for q in score_criteria["questions"]]
-    return jsonify({"questions": questions})
+class RatingRequest(BaseModel):
+    sports: Dict[str, Dict[str, str]]  
 
-@app.route("/calculate-rating", methods=["POST"])
-def calculate_rating():
-    data = request.json  
-    total_score = 0
+@app.get("/questions/{sport}")
+def get_questions(sport: str):
+    if sport not in SPORTS_QUESTIONS:
+        raise HTTPException(status_code=400, detail="Sport not supported")
+    return SPORTS_QUESTIONS[sport]
+
+@app.post("/calculate_rating")
+def calculate_rating(request: RatingRequest):
+    ratings = {}
     
-    for question in score_criteria["questions"]:
-        answer = data.get(question["question"], "")
-        total_score += question["options"].get(answer, 0)
+    for sport, answers in request.sports.items():
+        if sport not in SPORTS_QUESTIONS:
+            raise HTTPException(status_code=400, detail=f"Sport '{sport}' not supported")
+        
+        questions = SPORTS_QUESTIONS[sport]
+        total_score = 0
+        
+        for question, answer in answers.items():
+            if question in questions and answer in questions[question]["options"]:
+                total_score += questions[question]["options"][answer]
+            else:
+                raise HTTPException(status_code=400, detail=f"Invalid answer for {question} in {sport}")
+        
+        ratings[sport] = round(total_score, 2)
     
-    rating = 1
-    for scale in score_criteria["rating_scale"]:
-        if scale["min"] <= total_score <= scale["max"]:
-            rating = scale["rating"]
-            break
-    
-    return jsonify({"total_score": total_score, "rating": rating})
+    return {"ratings": ratings}
 
-if __name__ == "__main__":
-    app.run(debug=True)
+# Run using: uvicorn script_name:app --reload
