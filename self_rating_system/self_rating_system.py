@@ -6,7 +6,7 @@ from typing import Dict, List
 app = FastAPI()
 
 
-with open("sports_rating_data.json", "r") as file:
+with open("assets/sports_rating_data.json", "r") as file:
     SPORTS_QUESTIONS = json.load(file)
 
 class RatingRequest(BaseModel):
