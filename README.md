@@ -38,7 +38,7 @@ Ensure you have the following installed:
    ```
 3. Run the API:
    ```sh
-   uvicorn app:app --reload
+   uvicorn self_rating_system:app --reload
    ```
 
 
