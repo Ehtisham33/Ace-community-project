@@ -1,25 +1,24 @@
 import json
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import Dict, List
+from flask import Flask, request, jsonify
 
-app = FastAPI()
+app = Flask(__name__)
 
 # Load sports rating data from JSON file
 with open("assets/file.json", "r") as file:
     SPORTS_QUESTIONS = json.load(file)
 
-class RatingRequest(BaseModel):
-    sports: Dict[str, Dict[str, str]]  # Dictionary of sports with their answers
-
-@app.get("/questions/{sport}")
-def get_questions(sport: str):
+@app.route("/questions/<sport>", methods=["GET"])
+def get_questions(sport):
     if sport not in SPORTS_QUESTIONS:
-        raise HTTPException(status_code=400, detail="Sport not supported")
-    return SPORTS_QUESTIONS[sport]
+        return jsonify({"error": "Sport not supported"}), 400
+    return jsonify(SPORTS_QUESTIONS[sport])
 
-@app.get("/questions")
-def get_multiple_questions(sports: str):
+@app.route("/questions", methods=["GET"])
+def get_multiple_questions():
+    sports = request.args.get("sports")
+    if not sports:
+        return jsonify({"error": "No sports provided"}), 400
+    
     sports_list = sports.split(",")
     questions = {}
     
@@ -27,17 +26,20 @@ def get_multiple_questions(sports: str):
         if sport in SPORTS_QUESTIONS:
             questions[sport] = SPORTS_QUESTIONS[sport]
         else:
-            raise HTTPException(status_code=400, detail=f"Sport '{sport}' not supported")
+            return jsonify({"error": f"Sport '{sport}' not supported"}), 400
     
-    return questions
+    return jsonify(questions)
 
-@app.post("/calculate_rating")
-def calculate_rating(request: RatingRequest):
-    ratings = {}
+@app.route("/calculate_rating", methods=["POST"])
+def calculate_rating():
+    data = request.get_json()
+    if "sports" not in data:
+        return jsonify({"error": "Missing sports data"}), 400
     
-    for sport, answers in request.sports.items():
+    ratings = {}
+    for sport, answers in data["sports"].items():
         if sport not in SPORTS_QUESTIONS:
-            raise HTTPException(status_code=400, detail=f"Sport '{sport}' not supported")
+            return jsonify({"error": f"Sport '{sport}' not supported"}), 400
         
         questions = SPORTS_QUESTIONS[sport]
         total_score = 0
@@ -46,10 +48,11 @@ def calculate_rating(request: RatingRequest):
             if question in questions and answer in questions[question]["options"]:
                 total_score += questions[question]["options"][answer]
             else:
-                raise HTTPException(status_code=400, detail=f"Invalid answer for {question} in {sport}")
+                return jsonify({"error": f"Invalid answer for {question} in {sport}"}), 400
         
         ratings[sport] = round(total_score, 2)
     
-    return {"ratings": ratings}
+    return jsonify({"ratings": ratings})
 
-# Run using: uvicorn script_name:app --reload
+if __name__ == "__main__":
+    app.run(debug=True)
