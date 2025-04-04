@@ -5,7 +5,7 @@ from langchain_community.vectorstores import FAISS
 
 # step 1: load raw pdfs
 
-DATA_PATH ='/content/Ace-community-project/Padel-AI/data'
+DATA_PATH =r'D:\Glaxit Projects\Ace-community-project\Padel-AI\data'
 def load_pdf_file(data):
     loader= DirectoryLoader(
         data,

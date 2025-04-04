@@ -1,7 +1,7 @@
 import os
 import streamlit as st
-
-from langchain.embeddings import HuggingFaceEmbeddings
+import asyncio
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
 
 from langchain_community.vectorstores import FAISS
@@ -13,7 +13,7 @@ from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
 
-DB_FAISS_PATH="/content/Ace-community-project/Padel-AI/vectorstore/db_faiss"
+DB_FAISS_PATH=r"D:\Glaxit Projects\Ace-community-project\Padel-AI\vectorstore\db_faiss"
 @st.cache_resource
 def get_vectorstore():
     embedding_model=HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
@@ -27,16 +27,18 @@ def set_custom_prompt(custom_prompt_template):
 
 
 def load_llm(huggingface_repo_id, HF_TOKEN):
-    llm=HuggingFaceEndpoint(
+    llm = HuggingFaceEndpoint(
         repo_id=huggingface_repo_id,
+        task="text-generation",  
         temperature=0.5,
-        model_kwargs={"token":HF_TOKEN,
-                      "max_length":"512"}
+        model_kwargs={"token": HF_TOKEN, "max_length": "512"}
     )
     return llm
 
 
+
 def main():
+    asyncio.set_event_loop(asyncio.new_event_loop())
     st.title("Ask Chatbot!")
 
     if 'messages' not in st.session_state:
