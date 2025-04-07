@@ -31,6 +31,7 @@ print("Length of Text Chunks: ", len(text_chunks))
 # step 3: create vector embeddings
 
 def get_embedding_model():
+    print(f"Embedding Model Processing Begin!!...")
     embedding_model=HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     return embedding_model
 
@@ -39,5 +40,6 @@ embedding_model=get_embedding_model()
 # step 4: store embedding in FAISS
 
 DB_FAISS_PATH="vectorstore/db_faiss"
+print(f"Creating & Storing Database Processing Begin!!...")
 db=FAISS.from_documents(text_chunks, embedding_model)
 db.save_local(DB_FAISS_PATH)
