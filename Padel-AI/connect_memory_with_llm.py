@@ -42,7 +42,7 @@ def set_custom_prompt(custom_prompt_template):
     return prompt
 
 # Load Database
-DB_FAISS_PATH="/content/Ace-community-project/Padel-AI/vectorstore/db_faiss"
+DB_FAISS_PATH="vectorstore/db_faiss"
 embedding_model=HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 db=FAISS.load_local(DB_FAISS_PATH, embedding_model, allow_dangerous_deserialization=True)
 
